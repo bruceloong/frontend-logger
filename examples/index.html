@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frontend Logger SDK Example</title>
+    <!-- In a real setup, you would npm install and import, or use a CDN build from your dist folder -->
+    <!-- For this example, assuming SDK is built and available at ../dist/index.js -->
+    <script src="../dist/index.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+      }
+      .container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      h1,
+      h2 {
+        color: #333;
+      }
+      #logOutput {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        background-color: #e9e9e9;
+        height: 200px;
+        overflow-y: scroll;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Frontend Logger SDK Test Page</h1>
+
+      <h2>Configuration</h2>
+      <p>
+        SDK will be initialized with a mock <code>reportUrl</code>. Check
+        console for SDK debug messages and simulated log payloads.
+      </p>
+
+      <h2>Actions</h2>
+      <button id="btnInfoLog">Send Info Log</button>
+      <button id="btnWarnLog">Send Warn Log</button>
+      <button id="btnTrackEvent">Track Custom Event</button>
+      <button id="btnCaughtError">Generate Caught Error</button>
+      <button id="btnUnhandledError">Generate Unhandled JS Error</button>
+      <button id="btnPromiseRejection">Generate Promise Rejection</button>
+      <button id="btnResourceError">Generate Resource Error (Image)</button>
+      <a href="#section1" id="linkNav1">Navigate to #section1 (Hash Change)</a
+      ><br />
+      <a href="#section2" id="linkNav2">Navigate to #section2 (Hash Change)</a
+      ><br />
+      <button id="btnPushState">Simulate pushState</button>
+
+      <h2>Console Interaction</h2>
+      <button id="btnConsoleLog">console.log('Hello from console')</button>
+      <button id="btnConsoleError">console.error('Error from console')</button>
+
+      <div id="logOutput">Mock Log Output Area...</div>
+    </div>
+
+    <img
+      src="nonexistent.jpg"
+      alt="This image will fail to load"
+      style="display: none"
+    />
+
+    <script>
+      const mockReportUrl = "https://mock-server.com/api/logs"; // Replace with a real endpoint if you have one to test
+      const logOutputDiv = document.getElementById("logOutput");
+
+      // Override fetch and sendBeacon for this example to show payload in a div
+      const originalFetch = window.fetch;
+      window.fetch = function (url, options) {
+        if (url === mockReportUrl) {
+          logOutputDiv.innerHTML += `<div><strong>[Fetch Payload to ${url}]:</strong> ${options.body}</div>`;
+          console.log("[Mock Send] Fetch to:", url, "Body:", options.body);
+          return Promise.resolve(
+            new Response(null, { status: 204, statusText: "No Content" })
+          );
+        }
+        return originalFetch.apply(this, arguments);
+      };
+      const originalSendBeacon = navigator.sendBeacon;
+      navigator.sendBeacon = function (url, data) {
+        if (url === mockReportUrl) {
+          logOutputDiv.innerHTML += `<div><strong>[sendBeacon Payload to ${url}]:</strong> ${data}</div>`;
+          console.log("[Mock Send] sendBeacon to:", url, "Data:", data);
+          return true;
+        }
+        return originalSendBeacon.apply(this, arguments);
+      };
+
+      // Initialize SDK
+      if (window.FrontendLoggerSDK) {
+        const {
+          init,
+          log,
+          info,
+          warn,
+          error,
+          track,
+          setUser,
+          LogLevel,
+          FrontendLoggerSDK,
+        } = window.FrontendLoggerSDK;
+
+        init({
+          reportUrl: mockReportUrl,
+          appId: "test-app-001",
+          debug: true,
+          sampleRate: 1.0,
+          sdkVersion: "0.example.1",
+          autoTrack: {
+            jsError: true,
+            resourceError: true,
+            promiseRejection: true,
+            performance: true,
+            webVitals: true,
+            navigationTiming: true,
+            deviceInfo: true,
+          },
+          behavior: {
+            clicks: true, // Track all clicks
+            // clicks: { selectors: ['button'], ignoreClasses: ['no-track-this'] },
+            navigation: true,
+          },
+          maxBreadcrumbs: 25,
+          batchSize: 5, // Send logs in batches of 5
+          batchInterval: 3000, // Or every 3 seconds
+          beforeSend: (logEntry) => {
+            console.log("[SDK beforeSend Hook] Processing log:", logEntry);
+            // Example: add a global tag
+            // logEntry.globalTag = 'example-app';
+            if (
+              logEntry.type === "error" &&
+              logEntry.data.message?.includes("ignore this specific error")
+            ) {
+              console.warn(
+                "[SDK beforeSend Hook] Dropping specific error log.",
+                logEntry
+              );
+              return false;
+            }
+            return logEntry;
+          },
+        });
+
+        setUser("example-user-id-123", { department: "testing", role: "qa" });
+
+        document.getElementById("btnInfoLog").addEventListener("click", () => {
+          info("User clicked the info log button", {
+            customData: "some_value",
+            randomNumber: Math.random(),
+          });
+        });
+        document.getElementById("btnWarnLog").addEventListener("click", () => {
+          warn("This is a warning message from button click.", {
+            details: "user initiated warning",
+          });
+        });
+        document
+          .getElementById("btnTrackEvent")
+          .addEventListener("click", () => {
+            track("button_interaction", {
+              buttonName: "TrackCustomEvent",
+              value: 123,
+            });
+          });
+        document
+          .getElementById("btnCaughtError")
+          .addEventListener("click", () => {
+            try {
+              const a = {};
+              // @ts-ignore
+              a.b.c = "will fail";
+            } catch (e) {
+              error(e, {
+                context: "Caught error button click",
+                severity: "high",
+              });
+            }
+          });
+        document
+          .getElementById("btnUnhandledError")
+          .addEventListener("click", () => {
+            console.log("Generating unhandled JS error...");
+            setTimeout(() => {
+              const foo = {};
+              // @ts-ignore
+              foo.bar.baz = "unhandled"; // This will throw an error
+            }, 50);
+          });
+        document
+          .getElementById("btnPromiseRejection")
+          .addEventListener("click", () => {
+            console.log("Generating unhandled promise rejection...");
+            Promise.reject(new Error("Simulated Unhandled Promise Rejection"));
+            // Or Promise.reject('Just a string rejection');
+          });
+        document
+          .getElementById("btnResourceError")
+          .addEventListener("click", () => {
+            console.log(
+              "Attempting to load a non-existent image to trigger resource error..."
+            );
+            const img = document.createElement("img");
+            img.src =
+              "https://thishostprobablydoesnotexistqwerty.com/nonexistent-image.png";
+            img.alt = "purposefully broken image";
+            img.style.display = "none";
+            document.body.appendChild(img);
+            setTimeout(() => document.body.removeChild(img), 1000);
+          });
+
+        document
+          .getElementById("btnPushState")
+          .addEventListener("click", () => {
+            const randomNumber = Math.floor(Math.random() * 1000);
+            history.pushState(
+              { page: randomNumber },
+              `Page ${randomNumber}`,
+              `/example/page${randomNumber}`
+            );
+            // The SDK should automatically pick this up if behavior.navigation is true
+          });
+
+        document
+          .getElementById("btnConsoleLog")
+          .addEventListener("click", () => {
+            console.log("Hello from console button click", {
+              data: 123,
+              nested: { value: "abc" },
+            });
+          });
+        document
+          .getElementById("btnConsoleError")
+          .addEventListener("click", () => {
+            console.error(
+              "Error from console button click",
+              new Error("Simulated console error object")
+            );
+          });
+      } else {
+        console.error("FrontendLoggerSDK not found on window object!");
+        logOutputDiv.innerHTML =
+          "Error: FrontendLoggerSDK not found. Build the SDK first (e.g., npm run build) and ensure dist/index.js is accessible.";
+      }
+    </script>
+  </body>
+</html>
