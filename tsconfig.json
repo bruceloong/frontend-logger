@@ -1,24 +1,35 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
+    "target": "es2018",
+    "module": "esnext",
+    "moduleResolution": "node",
     "declaration": true,
-    "outDir": "./dist",
+    "declarationMap": true,
+    "outDir": "./dist/types",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false, // Set to false for webpack to handle emit or true if tsc only checks
+    "noEmit": false,
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*", "src/types/*"]
     },
-    "lib": ["dom", "esnext"]
+    "lib": ["dom", "dom.iterable", "es2018", "es2019", "es2020"],
+    "typeRoots": ["node_modules/@types"],
+    "removeComments": true,
+    "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "examples"
+  ]
 }

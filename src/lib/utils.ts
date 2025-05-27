@@ -1,5 +1,5 @@
-import { BaseLog, DeviceInfo, SdkConfig } from "../types";
-import { getSDKConfig, getSessionId, getCurrentUser } from "../index"; // 假设这些可以从主 index 文件获取
+import { BaseLog, DeviceInfo } from "../types";
+import { getSDKConfig, getSessionId, getCurrentUser } from "../state";
 
 export function getCommonLogData(): Omit<
   BaseLog,
@@ -12,7 +12,6 @@ export function getCommonLogData(): Omit<
   | "sdkVersion"
   | "appId"
 > {
-  const config = getSDKConfig();
   const user = getCurrentUser();
 
   return {

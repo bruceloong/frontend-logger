@@ -2,6 +2,9 @@
 
 一个用于客户端日志记录、错误跟踪、性能监控和行为分析的综合性 SDK。
 
+[![npm version](https://badge.fury.io/js/%40bruceloong%2Ffrontend-logger-sdk.svg)](https://badge.fury.io/js/%40bruceloong%2Ffrontend-logger-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## 特性
 
 - **错误跟踪**: 自动捕获 JavaScript 错误、资源加载错误和未处理的 Promise Rejection。
@@ -12,26 +15,41 @@
 - **批量与重试**: 高效地批量发送数据，并为上传失败提供重试机制。
 - **可配置**: 高度可配置，提供采样、数据过滤和功能切换选项。
 - **轻量级**: 设计目标是高性能，并对宿主应用程序的影响降到最低。
+- **多格式支持**: 支持 ES 模块、CommonJS 和 UMD 格式。
+- **TypeScript 支持**: 完整的 TypeScript 类型定义。
 
 ## 安装
 
 ```bash
-npm install frontend-logger-sdk # 替换为您的实际包名
-# 或者
-yarn add frontend-logger-sdk
+# 使用 npm
+npm install @bruceloong/frontend-logger-sdk
+
+# 使用 yarn
+yarn add @bruceloong/frontend-logger-sdk
+
+# 使用 pnpm
+pnpm add @bruceloong/frontend-logger-sdk
 ```
 
 ## 快速开始
 
+### ES 模块 (推荐)
+
 ```javascript
-import { init, error, log, track, setUser } from "frontend-logger-sdk"; // 根据您的设置/包名调整路径
+import {
+  init,
+  error,
+  log,
+  track,
+  setUser,
+} from "@bruceloong/frontend-logger-sdk";
 
 // 初始化 SDK
 init({
-  reportUrl: "https://your-logging-endpoint.com/api/logs", // 日志上报接口地址
-  appId: "YOUR_APP_ID", // 您的应用唯一标识
-  debug: true, // 在控制台启用 SDK 调试消息 (可选)
-  sampleRate: 1.0, // 记录 100% 的事件 (可选)
+  reportUrl: "https://your-logging-endpoint.com/api/logs",
+  appId: "YOUR_APP_ID",
+  debug: true,
+  sampleRate: 1.0,
   autoTrack: {
     jsError: true,
     resourceError: true,
@@ -42,42 +60,41 @@ init({
     deviceInfo: true,
   },
   behavior: {
-    clicks: true, // 或者 { selectors: ['button[data-track]'], ignoreClasses: ['no-track'] }
+    clicks: true,
     navigation: true,
   },
   maxBreadcrumbs: 30,
-  beforeSend: (logEntry) => {
-    // 修改 logEntry 或返回 false 以阻止发送
-    if (
-      logEntry.type === "error" &&
-      logEntry.data.message?.includes("ignore this error")
-    ) {
-      return false;
-    }
-    // 示例：添加自定义元数据
-    // logEntry.customData = { tenantId: '123' };
-    return logEntry;
-  },
 });
 
 // 使用示例
-
-// 设置用户信息 (可选)
 setUser("user-12345", { email: "user@example.com", name: "John Doe" });
-
-// 自定义日志消息
 log("用户执行了一个操作", { buttonId: "submit-form" }, "info");
-
-// 上报一个捕获的错误
-try {
-  //某些危险操作
-  throw new Error("出错了!");
-} catch (e) {
-  error(e, { context: "form-submission" });
-}
-
-// 追踪一个自定义事件
 track("videoPlayed", { videoId: "xyz", duration: 120 });
+```
+
+### CommonJS
+
+```javascript
+const { init, log, error, track } = require("@bruceloong/frontend-logger-sdk");
+
+init({
+  reportUrl: "https://your-logging-endpoint.com/api/logs",
+  appId: "YOUR_APP_ID",
+});
+```
+
+### UMD (浏览器直接引入)
+
+```html
+<script src="https://unpkg.com/@bruceloong/frontend-logger-sdk/dist/umd/frontend-logger-sdk.min.js"></script>
+<script>
+  FrontendLoggerSDK.init({
+    reportUrl: "https://your-logging-endpoint.com/api/logs",
+    appId: "YOUR_APP_ID",
+  });
+
+  FrontendLoggerSDK.log("页面已加载");
+</script>
 ```
 
 ## 配置
@@ -147,6 +164,80 @@ track("videoPlayed", { videoId: "xyz", duration: 120 });
 - `forceFlush(): void`
   手动触发发送任何排队的日志。
 
+## 框架集成
+
+### React
+
+```jsx
+import { useEffect } from "react";
+import { init, track, error } from "@bruceloong/frontend-logger-sdk";
+
+function App() {
+  useEffect(() => {
+    init({
+      reportUrl: "https://your-endpoint.com/logs",
+      appId: "react-app",
+    });
+  }, []);
+
+  const handleClick = () => {
+    track("button_click", { component: "App" });
+  };
+
+  return <button onClick={handleClick}>点击我</button>;
+}
+```
+
+### Vue
+
+```vue
+<template>
+  <button @click="handleClick">点击我</button>
+</template>
+
+<script>
+import { init, track } from "@bruceloong/frontend-logger-sdk";
+
+export default {
+  mounted() {
+    init({
+      reportUrl: "https://your-endpoint.com/logs",
+      appId: "vue-app",
+    });
+  },
+  methods: {
+    handleClick() {
+      track("button_click", { component: "VueComponent" });
+    },
+  },
+};
+</script>
+```
+
+### Angular
+
+```typescript
+import { Component, OnInit } from "@angular/core";
+import { init, track } from "@bruceloong/frontend-logger-sdk";
+
+@Component({
+  selector: "app-root",
+  template: '<button (click)="handleClick()">点击我</button>',
+})
+export class AppComponent implements OnInit {
+  ngOnInit() {
+    init({
+      reportUrl: "https://your-endpoint.com/logs",
+      appId: "angular-app",
+    });
+  }
+
+  handleClick() {
+    track("button_click", { component: "AppComponent" });
+  }
+}
+```
+
 ## 日志结构 (示例)
 
 发送到后端的日志通常遵循以下结构 (实际字段可能因日志类型而异):
@@ -154,23 +245,22 @@ track("videoPlayed", { videoId: "xyz", duration: 120 });
 ```json
 {
   "timestamp": 1678886400000,
-  "sdkVersion": "__SDK_VERSION__",
+  "sdkVersion": "1.0.0",
   "appId": "YOUR_APP_ID",
   "userId": "user-12345",
   "sessionId": "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",
   "pageUrl": "https://example.com/some-page",
   "level": "error",
   "type": "error",
-  "category": "js", // 例如: 'js', 'resource', 'promise', 'manual', 'web-vitals', 'click'
+  "category": "js",
   "data": {
-    // 特定类型的数据
     "message": "Uncaught TypeError: Cannot read property 'foo' of undefined",
     "source": "https://example.com/static/js/main.chunk.js",
     "lineno": 123,
     "colno": 45,
     "stack": "TypeError: Cannot read property...\n    at foo (https://example.com/...)"
   },
-  "deviceInfo": { // 可选，如果 sendDeviceInfoWithLogs 为 true 或用于专用的 device_info 日志
+  "deviceInfo": {
     "userAgent": "Mozilla/5.0 (...)",
     "platform": "MacIntel",
     "language": "en-US",
@@ -179,24 +269,104 @@ track("videoPlayed", { videoId: "xyz", duration: 120 });
     "network": "4g"
   },
   "breadcrumbs": [
-    { "type": "navigation", "message": "Navigated to /some-page", "timestamp": ... },
-    { "type": "click", "message": "Clicked on button#submit", "timestamp": ... }
+    {
+      "type": "navigation",
+      "message": "Navigated to /some-page",
+      "timestamp": 1678886300000
+    },
+    {
+      "type": "click",
+      "message": "Clicked on button#submit",
+      "timestamp": 1678886350000
+    }
   ]
 }
 ```
 
 ## 开发
 
-- 克隆仓库。
-- 安装依赖: `npm install`
-- 构建 SDK: `npm run build`
-- 运行测试: `npm run test`
-- Lint 代码: `npm run lint`
+```bash
+# 克隆仓库
+git clone https://github.com/bruceloong/frontend-logger-sdk.git
+cd frontend-logger-sdk
+
+# 安装依赖
+npm install
+
+# 构建 SDK
+npm run build
+
+# 运行测试
+npm test
+
+# 运行测试覆盖率
+npm run test:coverage
+
+# Lint 代码
+npm run lint
+
+# 修复 lint 问题
+npm run lint:fix
+```
+
+## 构建产物
+
+构建后会生成以下文件：
+
+```
+dist/
+├── cjs/           # CommonJS 格式
+│   ├── index.js
+│   └── index.js.map
+├── esm/           # ES 模块格式
+│   ├── index.js
+│   └── index.js.map
+├── umd/           # UMD 格式 (浏览器)
+│   ├── frontend-logger-sdk.min.js
+│   └── frontend-logger-sdk.min.js.map
+└── types/         # TypeScript 类型定义
+    └── index.d.ts
+```
+
+## 发布
+
+```bash
+# 运行发布脚本
+chmod +x scripts/publish.sh
+./scripts/publish.sh
+
+# 或手动发布
+npm run build
+npm test
+npm publish
+```
+
+## 浏览器支持
+
+- Chrome >= 60
+- Firefox >= 55
+- Safari >= 12
+- Edge >= 79
 
 ## 贡献
 
 欢迎贡献！请提出 issue 或提交 pull request。
 
+1. Fork 项目
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开 Pull Request
+
 ## 许可证
 
 MIT
+
+## 更新日志
+
+### v1.0.0
+
+- 初始发布
+- 支持错误跟踪、性能监控、行为分析
+- 多格式构建支持 (ESM, CJS, UMD)
+- 完整的 TypeScript 支持

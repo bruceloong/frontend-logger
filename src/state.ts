@@ -1,5 +1,4 @@
 import { SdkConfig, UserInfo } from "./types";
-import { defaultConfig } from "./config";
 
 // SDK配置实例
 let sdkConfigInstance: SdkConfig | null = null;

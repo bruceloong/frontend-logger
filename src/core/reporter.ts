@@ -1,5 +1,5 @@
 import { LogEntry, SdkConfig } from "../types";
-import { getSDKConfig } from "../index"; // 假设这将从主 index 文件中可用
+import { getSDKConfig } from "../state";
 import { trySafe } from "../lib/utils";
 
 let logQueue: LogEntry[] = [];

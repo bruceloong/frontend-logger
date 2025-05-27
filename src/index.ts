@@ -1,11 +1,9 @@
 import {
   SdkConfig,
-  LogEntry,
   LogLevel,
   LogType,
   CustomLog,
   ErrorLog,
-  PerformanceLog,
   BehaviorLog,
   UserInfo,
   DeviceInfoLog,
@@ -15,7 +13,6 @@ import {
   setSDKConfig,
   getSDKConfig,
   setCurrentSessionId,
-  getSessionId,
   setCurrentUser,
   getCurrentUser,
   isSDKInitialized,
@@ -39,7 +36,6 @@ import { BreadcrumbType } from "./types";
 import {
   getCommonLogData as internalGetCommonLogData,
   getDeviceInfo,
-  generateUUID,
   getOrCreateSessionId,
   updateSessionLastActivity,
   trySafe,
@@ -137,7 +133,6 @@ const _log = (
   message: string,
   data?: any,
   level: LogLevel = LogLevel.INFO,
-  type: LogType = LogType.CUSTOM,
   category?: string
 ): void => {
   if (!isSDKInitialized()) {
@@ -337,3 +332,25 @@ if (typeof window !== "undefined") {
     BreadcrumbType,
   };
 }
+
+// 默认导出，用于支持 import SDK from 'frontend-logger-sdk' 语法
+const FrontendLoggerSDK = {
+  init,
+  log,
+  info,
+  warn,
+  error,
+  track,
+  setUser,
+  clearUser,
+  forceFlush,
+  addBreadcrumb,
+  getBreadcrumbs,
+  clearBreadcrumbs,
+  flush,
+  LogLevel,
+  LogType,
+  BreadcrumbType,
+};
+
+export default FrontendLoggerSDK;

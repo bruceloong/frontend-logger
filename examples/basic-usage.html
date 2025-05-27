@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>前端日志SDK - 基本使用示例</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .button {
+        background: #007cba;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .button:hover {
+        background: #005a87;
+      }
+      .error-button {
+        background: #dc3545;
+      }
+      .error-button:hover {
+        background: #c82333;
+      }
+      .log-output {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin-top: 20px;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>前端日志SDK - 基本使用示例</h1>
+
+    <h2>功能演示</h2>
+    <div>
+      <button class="button" onclick="testLog()">记录信息日志</button>
+      <button class="button" onclick="testWarn()">记录警告日志</button>
+      <button class="button error-button" onclick="testError()">
+        触发错误
+      </button>
+      <button class="button" onclick="testTrack()">跟踪事件</button>
+      <button class="button" onclick="testUser()">设置用户信息</button>
+      <button class="button" onclick="testPerformance()">模拟性能问题</button>
+    </div>
+
+    <div id="output" class="log-output">控制台输出将显示在这里...</div>
+
+    <!-- 使用UMD版本 -->
+    <script src="../dist/umd/frontend-logger-sdk.min.js"></script>
+    <script>
+      // 初始化SDK
+      FrontendLoggerSDK.init({
+        reportUrl: "https://your-logging-endpoint.com/api/logs",
+        appId: "demo-app",
+        debug: true,
+        sampleRate: 1.0,
+        autoTrack: {
+          jsError: true,
+          resourceError: true,
+          promiseRejection: true,
+          performance: true,
+          webVitals: true,
+          navigationTiming: true,
+          deviceInfo: true,
+        },
+        behavior: {
+          clicks: true,
+          navigation: true,
+        },
+        maxBreadcrumbs: 30,
+      });
+
+      // 重写console.log以显示在页面上
+      const output = document.getElementById("output");
+      const originalLog = console.log;
+      console.log = function (...args) {
+        originalLog.apply(console, args);
+        output.textContent += args.join(" ") + "\n";
+        output.scrollTop = output.scrollHeight;
+      };
+
+      // 测试函数
+      function testLog() {
+        FrontendLoggerSDK.log("用户点击了信息按钮", {
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        });
+        console.log("✅ 信息日志已发送");
+      }
+
+      function testWarn() {
+        FrontendLoggerSDK.warn("这是一个警告消息", {
+          component: "demo-page",
+          action: "warn-button-click",
+        });
+        console.log("⚠️ 警告日志已发送");
+      }
+
+      function testError() {
+        try {
+          // 故意触发错误
+          throw new Error("这是一个演示错误");
+        } catch (e) {
+          FrontendLoggerSDK.error(e, {
+            context: "demo-error-button",
+            userId: "demo-user-123",
+          });
+          console.log("❌ 错误日志已发送");
+        }
+      }
+
+      function testTrack() {
+        FrontendLoggerSDK.track("button_click", {
+          buttonType: "track-demo",
+          page: "demo-page",
+          timestamp: Date.now(),
+        });
+        console.log("📊 事件跟踪已发送");
+      }
+
+      function testUser() {
+        FrontendLoggerSDK.setUser("demo-user-123", {
+          name: "演示用户",
+          email: "demo@example.com",
+          role: "tester",
+        });
+        console.log("👤 用户信息已设置");
+      }
+
+      function testPerformance() {
+        // 模拟一个耗时操作
+        const start = performance.now();
+        let result = 0;
+        for (let i = 0; i < 1000000; i++) {
+          result += Math.random();
+        }
+        const duration = performance.now() - start;
+
+        FrontendLoggerSDK.track("performance_test", {
+          operation: "heavy_calculation",
+          duration: duration,
+          result: result,
+        });
+        console.log(`⚡ 性能测试完成，耗时: ${duration.toFixed(2)}ms`);
+      }
+
+      // 页面加载完成后的初始化日志
+      window.addEventListener("load", function () {
+        console.log("🚀 前端日志SDK演示页面已加载");
+        FrontendLoggerSDK.track("page_loaded", {
+          page: "demo",
+          loadTime: performance.now(),
+        });
+      });
+    </script>
+  </body>
+</html>

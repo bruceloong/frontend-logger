@@ -42,8 +42,6 @@ export function instrumentConsole(): void {
   const maxCrumbs = getConfigValue("maxBreadcrumbs");
   if (!maxCrumbs || maxCrumbs <= 0) return; // 如果禁用了面包屑，则不进行检测
 
-  const config = getSDKConfig(); // 获取完整配置以供调试日志使用 (可选)
-
   const consoleMap: { [key: string]: BreadcrumbType } = {
     log: BreadcrumbType.CONSOLE, // 可以考虑更具体，如 CONSOLE_LOG
     info: BreadcrumbType.CONSOLE,
